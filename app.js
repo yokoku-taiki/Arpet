@@ -34,6 +34,14 @@ window.addEventListener("DOMContentLoaded", function () {
     );
     plane1.position = new BABYLON.Vector3(0, 0, 0);
 
+    // ウィンドウのアスペクト比に合わせて平面をスケーリング
+    function resizePlane() {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      plane1.scaling.x = aspectRatio * 9; // 横の比率を合わせる
+      plane1.scaling.y = 9; // 縦の比率は固定
+    }
+    resizePlane(); // 初期サイズを設定
+
     // Webカメラ映像を取得し、テクスチャに適用
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: { ideal: facingMode } } })
@@ -42,13 +50,14 @@ window.addEventListener("DOMContentLoaded", function () {
         video.srcObject = stream;
         video.play();
 
-        // ビデオ要素を表示して確認（オプション：テスト用）
+        // ビデオ要素は画面全体にフィット
         video.style.position = "absolute";
         video.style.top = "0";
         video.style.left = "0";
         video.style.width = "100%";
         video.style.height = "100%";
-        document.body.appendChild(video); // カメラ映像を画面全体に表示
+        video.style.objectFit = "cover";
+        document.body.appendChild(video);
 
         // Babylon.js のビデオテクスチャを作成
         const videoTexture = new BABYLON.VideoTexture(
@@ -82,6 +91,7 @@ window.addEventListener("DOMContentLoaded", function () {
     });
 
     window.addEventListener("resize", function () {
+      resizePlane(); // ウィンドウリサイズに合わせて平面をリサイズ
       engine.resize();
     });
   }
