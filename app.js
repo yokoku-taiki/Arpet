@@ -76,6 +76,17 @@ window.addEventListener("DOMContentLoaded", function () {
         alert("カメラにアクセスできません。設定を確認してください。");
       });
 
+    // 3Dモデル（犬のモデル）を読み込む
+    BABYLON.SceneLoader.Append(
+      "models/",
+      "scene.gltf",
+      scene,
+      function (scene) {
+        const dog = scene.meshes[0]; // 犬のモデル
+        dog.position = new BABYLON.Vector3(0, -2, 0); // 位置を調整
+      }
+    );
+
     return scene;
   };
 
