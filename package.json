@@ -1,0 +1,19 @@
+{
+  "name": "ar-pet",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "lite-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "babylonjs": "^7.29.0"
+  },
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  }
+}

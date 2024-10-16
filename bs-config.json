@@ -1,0 +1,7 @@
+{
+  "port": 1892,
+  "server": {
+    "baseDir": "./",
+    "index": "index.html"
+  }
+}
