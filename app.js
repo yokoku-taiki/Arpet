@@ -1,19 +1,22 @@
 window.addEventListener("DOMContentLoaded", function () {
   const canvas = document.getElementById("renderCanvas");
+  const cameraSelection = document.getElementById("cameraSelection");
+  const frontCameraButton = document.getElementById("frontCamera");
+  const backCameraButton = document.getElementById("backCamera");
+
   const engine = new BABYLON.Engine(canvas, true);
 
-  const createScene = function () {
+  // カメラ映像を表示するシーンを作成
+  const createScene = function (facingMode) {
     const scene = new BABYLON.Scene(engine);
 
-    // FreeCamera を作成して、シーン全体を見渡す
+    // Babylon.js のカメラを作成（3Dシーン用）
     const camera = new BABYLON.FreeCamera(
       "camera1",
-      new BABYLON.Vector3(0.5, 5, -8),
+      new BABYLON.Vector3(0, 0, -10),
       scene
     );
     camera.setTarget(BABYLON.Vector3.Zero());
-    camera.attachControl(canvas, true);
-    camera.rotation.x -= Math.PI * 0.05;
 
     // 環境光
     const light = new BABYLON.HemisphericLight(
@@ -24,36 +27,72 @@ window.addEventListener("DOMContentLoaded", function () {
     light.intensity = 0.7;
 
     // カメラ映像を貼り付ける平面を作成
-    const plane1 = BABYLON.Mesh.CreatePlane("plane1", 7, scene);
-    plane1.rotation.z = Math.PI;
-    plane1.position.y = 1;
+    const plane1 = BABYLON.MeshBuilder.CreatePlane(
+      "plane1",
+      { width: 16, height: 9 },
+      scene
+    );
+    plane1.position = new BABYLON.Vector3(0, 0, 0);
 
-    // Webカメラの映像をテクスチャとして取得し、平面に貼り付ける
-    const videoMaterial = new BABYLON.StandardMaterial("texture1", scene);
-    videoMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);
+    // Webカメラ映像を取得し、テクスチャに適用
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: { ideal: facingMode } } })
+      .then((stream) => {
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        video.play();
 
-    BABYLON.VideoTexture.CreateFromWebCam(
-      scene,
-      function (videoTexture) {
+        // ビデオ要素を表示して確認（オプション：テスト用）
+        video.style.position = "absolute";
+        video.style.top = "0";
+        video.style.left = "0";
+        video.style.width = "100%";
+        video.style.height = "100%";
+        document.body.appendChild(video); // カメラ映像を画面全体に表示
+
+        // Babylon.js のビデオテクスチャを作成
+        const videoTexture = new BABYLON.VideoTexture(
+          "video",
+          video,
+          scene,
+          true,
+          true
+        );
+        const videoMaterial = new BABYLON.StandardMaterial("videoMat", scene);
         videoMaterial.diffuseTexture = videoTexture;
         plane1.material = videoMaterial;
-      },
-      { maxWidth: 256, maxHeight: 256 } // 必要に応じて解像度を調整
-    );
+      })
+      .catch((error) => {
+        console.error("カメラのアクセスに失敗しました: ", error);
+        alert("カメラにアクセスできません。設定を確認してください。");
+      });
 
     return scene;
   };
 
-  // シーンを作成
-  const scene = createScene();
+  // カメラ選択時の処理
+  function startCamera(facingMode) {
+    cameraSelection.style.display = "none";
+    canvas.style.display = "block";
 
-  // レンダーループを開始
-  engine.runRenderLoop(function () {
-    scene.render();
+    const scene = createScene(facingMode);
+
+    engine.runRenderLoop(function () {
+      scene.render();
+    });
+
+    window.addEventListener("resize", function () {
+      engine.resize();
+    });
+  }
+
+  // 内カメラボタンのクリックイベント
+  frontCameraButton.addEventListener("click", function () {
+    startCamera("user"); // 内カメラを使用
   });
 
-  // ウィンドウリサイズに対応
-  window.addEventListener("resize", function () {
-    engine.resize();
+  // 外カメラボタンのクリックイベント
+  backCameraButton.addEventListener("click", function () {
+    startCamera("environment"); // 外カメラを使用
   });
 });
