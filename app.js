@@ -6,43 +6,35 @@ window.addEventListener("DOMContentLoaded", function () {
 
   const engine = new BABYLON.Engine(canvas, true);
 
-  // カメラ映像を表示するシーンを作成
   const createScene = function (facingMode) {
     const scene = new BABYLON.Scene(engine);
 
-    // Babylon.js のカメラを作成（3Dシーン用）
+    // カメラを設定
     const camera = new BABYLON.FreeCamera(
       "camera1",
-      new BABYLON.Vector3(0, 0, -10),
+      new BABYLON.Vector3(0, 0, -20), // カメラを後方に配置
       scene
     );
     camera.setTarget(BABYLON.Vector3.Zero());
+    camera.attachControl(canvas, false); // カメラを固定
 
-    // 環境光
+    // 環境光を設定（光を強くする）
     const light = new BABYLON.HemisphericLight(
       "light",
       new BABYLON.Vector3(0, 1, 0),
       scene
     );
-    light.intensity = 0.7;
+    light.intensity = 1.5; // 明るさを増加
 
-    // カメラ映像を貼り付ける平面を作成
-    const plane1 = BABYLON.MeshBuilder.CreatePlane(
-      "plane1",
-      { width: 16, height: 9 },
+    // スマホ画面をシミュレートする壁（9:16のアスペクト比）
+    const phoneWall = BABYLON.MeshBuilder.CreatePlane(
+      "phoneWall",
+      { width: 9, height: 16 }, // 縦16横9のアスペクト比
       scene
     );
-    plane1.position = new BABYLON.Vector3(0, 0, 0);
+    phoneWall.position = new BABYLON.Vector3(0, 0, 0); // 画面中央に配置
 
-    // ウィンドウのアスペクト比に合わせて平面をスケーリング
-    function resizePlane() {
-      const aspectRatio = window.innerWidth / window.innerHeight;
-      plane1.scaling.x = aspectRatio * 9; // 横の比率を合わせる
-      plane1.scaling.y = 9; // 縦の比率は固定
-    }
-    resizePlane(); // 初期サイズを設定
-
-    // Webカメラ映像を取得し、テクスチャに適用
+    // カメラ映像を取得し、壁に投影する処理
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: { ideal: facingMode } } })
       .then((stream) => {
@@ -50,47 +42,52 @@ window.addEventListener("DOMContentLoaded", function () {
         video.srcObject = stream;
         video.play();
 
-        // ビデオ要素は画面全体にフィット
-        video.style.position = "absolute";
-        video.style.top = "0";
-        video.style.left = "0";
-        video.style.width = "100%";
-        video.style.height = "100%";
-        video.style.objectFit = "cover";
-        document.body.appendChild(video);
-
         // Babylon.js のビデオテクスチャを作成
         const videoTexture = new BABYLON.VideoTexture(
-          "video",
+          "videoTexture",
           video,
           scene,
           true,
           true
         );
+
+        // 映像の上下反転修正
+        videoTexture.uScale = -1; // 横反転
+        videoTexture.vScale = -1; // 縦反転
+
         const videoMaterial = new BABYLON.StandardMaterial("videoMat", scene);
         videoMaterial.diffuseTexture = videoTexture;
-        plane1.material = videoMaterial;
+        phoneWall.material = videoMaterial; // 壁にカメラ映像を貼り付け
+
+        // 最初の表示が細くならないように、初期リサイズ処理
+        function resizeWall() {
+          const aspectRatio = window.innerWidth / window.innerHeight;
+          const targetAspectRatio = 9 / 16;
+
+          if (aspectRatio < targetAspectRatio) {
+            phoneWall.scaling.x = 1;
+            phoneWall.scaling.y = 1;
+          } else {
+            phoneWall.scaling.x = 1;
+            phoneWall.scaling.y = 1;
+          }
+        }
+
+        resizeWall(); // 初期サイズ調整
+
+        // 1秒後にリサイズ（再読み込みのような動作）
+        setTimeout(function () {
+          resizeWall(); // 再リサイズを呼び出し
+        }, 1000); // 1秒後に実行
       })
       .catch((error) => {
         console.error("カメラのアクセスに失敗しました: ", error);
         alert("カメラにアクセスできません。設定を確認してください。");
       });
 
-    // 3Dモデル（犬のモデル）を読み込む
-    BABYLON.SceneLoader.Append(
-      "models/",
-      "scene.gltf",
-      scene,
-      function (scene) {
-        const dog = scene.meshes[0]; // 犬のモデル
-        dog.position = new BABYLON.Vector3(0, -2, 0); // 位置を調整
-      }
-    );
-
     return scene;
   };
 
-  // カメラ選択時の処理
   function startCamera(facingMode) {
     cameraSelection.style.display = "none";
     canvas.style.display = "block";
@@ -102,18 +99,15 @@ window.addEventListener("DOMContentLoaded", function () {
     });
 
     window.addEventListener("resize", function () {
-      resizePlane(); // ウィンドウリサイズに合わせて平面をリサイズ
       engine.resize();
     });
   }
 
-  // 内カメラボタンのクリックイベント
   frontCameraButton.addEventListener("click", function () {
-    startCamera("user"); // 内カメラを使用
+    startCamera("user");
   });
 
-  // 外カメラボタンのクリックイベント
   backCameraButton.addEventListener("click", function () {
-    startCamera("environment"); // 外カメラを使用
+    startCamera("environment");
   });
 });
