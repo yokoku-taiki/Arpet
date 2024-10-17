@@ -57,8 +57,6 @@ window.addEventListener("DOMContentLoaded", function () {
           true
         );
 
-        // 映像の上下反転修正
-        videoTexture.uScale = -1; // 横反転
         videoTexture.vScale = -1; // 縦反転
 
         const videoMaterial = new BABYLON.StandardMaterial("videoMat", scene);
