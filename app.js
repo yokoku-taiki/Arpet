@@ -18,7 +18,7 @@ window.addEventListener("DOMContentLoaded", function () {
     camera.setTarget(BABYLON.Vector3.Zero());
     camera.attachControl(canvas, false); // カメラを固定
 
-    // 環境光を設定（光を強くする）
+    // 環境光を設定
     const light = new BABYLON.HemisphericLight(
       "light",
       new BABYLON.Vector3(0, 1, 0),
@@ -36,7 +36,13 @@ window.addEventListener("DOMContentLoaded", function () {
 
     // カメラ映像を取得し、壁に投影する処理
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: { ideal: facingMode } } })
+      .getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 }, // 解像度を1920x1080に指定
+          height: { ideal: 1080 },
+        },
+      })
       .then((stream) => {
         const video = document.createElement("video");
         video.srcObject = stream;
@@ -59,26 +65,10 @@ window.addEventListener("DOMContentLoaded", function () {
         videoMaterial.diffuseTexture = videoTexture;
         phoneWall.material = videoMaterial; // 壁にカメラ映像を貼り付け
 
-        // 最初の表示が細くならないように、初期リサイズ処理
-        function resizeWall() {
-          const aspectRatio = window.innerWidth / window.innerHeight;
-          const targetAspectRatio = 9 / 16;
-
-          if (aspectRatio < targetAspectRatio) {
-            phoneWall.scaling.x = 1;
-            phoneWall.scaling.y = 1;
-          } else {
-            phoneWall.scaling.x = 1;
-            phoneWall.scaling.y = 1;
-          }
-        }
-
-        resizeWall(); // 初期サイズ調整
-
-        // 1秒後にリサイズ（再読み込みのような動作）
-        setTimeout(function () {
-          resizeWall(); // 再リサイズを呼び出し
-        }, 1000); // 1秒後に実行
+        // 読み込み後すぐにリサイズをトリガー
+        setTimeout(() => {
+          window.dispatchEvent(new Event("resize")); // リサイズイベントを強制的に発生させる
+        }, 0); // 0msの遅延でリサイズイベントを実行
       })
       .catch((error) => {
         console.error("カメラのアクセスに失敗しました: ", error);
