@@ -16,7 +16,9 @@ window.addEventListener("DOMContentLoaded", function () {
       scene
     );
     camera.setTarget(BABYLON.Vector3.Zero());
-    camera.attachControl(canvas, false); // カメラを固定
+
+    // カメラの回転やドラッグ移動を無効にする
+    camera.inputs.clear(); // カメラの全てのデフォルト入力（マウス操作やタッチ）をクリア
 
     // 環境光を設定
     const light = new BABYLON.HemisphericLight(
@@ -32,11 +34,17 @@ window.addEventListener("DOMContentLoaded", function () {
       { width: 9, height: 16 },
       scene
     );
-    phoneWall.position = new BABYLON.Vector3(0, 0, 0);
+    phoneWall.position = new BABYLON.Vector3(0, 0, 0); // 画面中央に配置
 
     // カメラ映像を取得し、壁に投影する処理
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: { ideal: facingMode } } })
+      .getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 }, // 解像度を1920x1080に指定
+          height: { ideal: 1080 },
+        },
+      })
       .then((stream) => {
         const video = document.createElement("video");
         video.srcObject = stream;
@@ -56,21 +64,23 @@ window.addEventListener("DOMContentLoaded", function () {
         videoMaterial.diffuseTexture = videoTexture;
         phoneWall.material = videoMaterial;
 
+        // 読み込み後すぐにリサイズをトリガー
         setTimeout(() => {
           window.dispatchEvent(new Event("resize"));
         }, 0);
       })
       .catch((error) => {
+        console.error("カメラのアクセスに失敗しました: ", error);
         alert("カメラにアクセスできません。設定を確認してください。");
       });
 
     // 犬の3Dモデルを読み込む
     BABYLON.SceneLoader.Append("models/", "scene.gltf", scene, function () {
-      const dog = scene.getMeshByName("Object_206");
+      const dog = scene.getMeshByName("Object_206"); // 犬のメッシュを取得
       if (dog) {
-        dog.position = new BABYLON.Vector3(0, 0, 0);
-        dog.scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
-        dog.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+        dog.position = new BABYLON.Vector3(0, 0, 0); // カメラの映像の前方に犬を配置
+        dog.scaling = new BABYLON.Vector3(0.05, 0.05, 0.05); // モデルのサイズを調整
+        dog.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Y軸で180度回転させる
 
         // 特定のアニメーション "sitting_0" を再生
         const animationGroups = scene.animationGroups;
